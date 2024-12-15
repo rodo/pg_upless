@@ -1,0 +1,45 @@
+{
+   "name": "pg_upless",
+   "abstract": "Statistics on useless updates statements",
+   "description": "Statistics on useless updates statements",
+   "version": "0.0.1",
+   "maintainer": [
+      "Rodolphe Quiédeville <rodolphe@quiedeville.org>"
+   ],
+   "license": {
+      "PostgreSQL": "https://www.postgresql.org/about/licence"
+   },
+   "prereqs": {
+       "runtime": {
+           "requires": {
+               "plpgsql": 0,
+               "PostgreSQL": "12.0.0"
+           }
+      }
+   },
+   "provides": {
+     "pg_upless": {
+       "abstract": "Statistics on useless updates statements",
+       "file": "pg_upless.sql",
+       "version": "0.0.1"
+     }
+   },
+   "resources": {
+      "bugtracker": {
+         "web": "https://github.com/rodo/pg_upless/issues"
+      },
+      "repository": {
+        "url":  "https://github.com/rodo/pg_upless.git",
+        "web":  "https://github.com/rodo/pg_upless",
+        "type": "git"
+      }
+   },
+   "generated_by": "Rodolphe Quiédeville",
+   "meta-spec": {
+      "version": "1.0.0",
+      "url": "https://pgxn.org/meta/spec.txt"
+   },
+   "tags": [
+      "audit"
+   ]
+}

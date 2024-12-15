@@ -1,0 +1,6 @@
+SELECT pgtle.install_extension
+(
+ 'pg_upless',
+ '_EXTVERSION_',
+ 'Make statistics on useless index',
+$_pg_tle_$
