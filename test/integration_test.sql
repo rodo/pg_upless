@@ -1,7 +1,7 @@
 BEGIN;
 
 -- Define the number of tests to run
-SELECT plan(2);
+SELECT plan(3);
 
 CREATE TABLE foobar_upless (id int, fname text DEFAULT 'alpha') ;
 
@@ -22,6 +22,11 @@ UPDATE foobar_upless SET id = 7;
 SELECT results_eq(
        'SELECT relnamespace, relname, useful::integer, useless::integer FROM pg_upless_stats',
        $$VALUES ('public'::name, 'foobar_upless'::name, 9,1)$$,
+       'The stats are correctly collected');
+
+SELECT results_eq(
+       'SELECT count(*)::int FROM pg_upless_start_time',
+       $$VALUES (1)$$,
        'The stats are correctly collected');
 
 

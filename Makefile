@@ -12,9 +12,9 @@ EXTVERSION   = $(shell grep -m 1 '[[:space:]]\{3\}"version":' META.json | \
 DISTVERSION  = $(shell grep -m 1 '[[:space:]]\{3\}"version":' META.json | \
 	       sed -e 's/[[:space:]]*"version":[[:space:]]*"\([^"]*\)",\{0,1\}/\1/')
 
-DATA = $(wildcard pg_upless--*.sql)
+DATA = $(wildcard dist/pg_upless--*.sql)
 
-PGTLEOUT = pgtle.$(EXTENSION)--$(EXTVERSION).sql
+PGTLEOUT = dist/pgtle.$(EXTENSION)--$(EXTVERSION).sql
 
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
@@ -24,11 +24,11 @@ SCHEMA = @extschema@
 
 include $(PGXS)
 
-all: $(EXTENSION)--$(EXTVERSION).sql $(PGTLEOUT) $(EXTENSION).control
+all: dist/$(EXTENSION)--$(EXTVERSION).sql $(PGTLEOUT) $(EXTENSION).control
 
-$(EXTENSION)--$(EXTVERSION).sql: $(FILES)
+dist/$(EXTENSION)--$(EXTVERSION).sql: $(FILES)
 	cat $(FILES) > $@
-	cat $@ > $(EXTENSION).sql
+	cat $@ > dist/$(EXTENSION).sql
 
 clean:
 	rm -f *.zip $(EXTENSION).control
