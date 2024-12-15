@@ -1,7 +1,11 @@
 BEGIN;
 
+-- useful for local tests
+TRUNCATE pg_upless_start_time;
+TRUNCATE pg_upless_stats;
+
 -- Define the number of tests to run
-SELECT plan(3);
+SELECT plan(5);
 
 CREATE TABLE foobar_upless (id int, fname text DEFAULT 'alpha') ;
 
@@ -28,6 +32,11 @@ SELECT results_eq(
        'SELECT count(*)::int FROM pg_upless_start_time',
        $$VALUES (1)$$,
        'The stats are correctly collected');
+
+
+SELECT lives_ok('SELECT pg_upless_stop(''public'', ''foobar_upless'')', 'The stop is ok');
+
+SELECT lives_ok('SELECT pg_upless_start(''public'', ''foobar_upless'')', 'The start after a stop is ok');
 
 
 SELECT * FROM finish();
