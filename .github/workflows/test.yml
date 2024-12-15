@@ -1,0 +1,33 @@
+name: Test
+on:
+  pull_request:
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - { version: 17 }
+          - { version: 16 }
+          - { version: 15 }
+          - { version: 14 }
+          - { version: 13 }
+          - { version: 12 }
+    name: PostgreSQL ${{ matrix.version }}
+    runs-on: ubuntu-latest
+    container: pgxn/pgxn-tools
+    env:
+      PGUSER: postgres
+    steps:
+      - run: pg-start ${{ matrix.version }}
+      - uses: actions/checkout@v4
+
+      - run: sudo apt-get install -y --no-install-recommends postgresql-${{ matrix.version }}-pgtap
+      - run: psql -c 'CREATE EXTENSION pgtap'
+
+      # Test all, install, test, test-serial, and test-parallel, both from clean
+      # repo and repeated with existing build, with and without PARALLEL_CONN=1.
+      - run: make uninstall clean
+      - run: make all
+      - run: make install
+      - run: psql -c 'CREATE EXTENSION pg_upless'
+      - run: pg_prove -v -r --ext .sql test/

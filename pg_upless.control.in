@@ -1,0 +1,6 @@
+# pg_upless
+comment = 'Detect useless UPDATEs'
+default_version = 'EXTVERSION'
+requires = 'plpgsql'
+relocatable = false
+superuser = false
