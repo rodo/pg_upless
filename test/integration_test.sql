@@ -19,11 +19,10 @@ INSERT INTO foobar_upless (id) VALUES (generate_series(1,10) );
 
 UPDATE foobar_upless SET id = 7;
 
-
 SELECT results_eq(
-       'SELECT useful::integer,useless::integer FROM pg_upless_stats',
-       $$VALUES (9,1)$$,
-       'The data is not historized');
+       'SELECT relnamespace, relname, useful::integer, useless::integer FROM pg_upless_stats',
+       $$VALUES ('public'::name, 'foobar_upless'::name, 9,1)$$,
+       'The stats are correctly collected');
 
 
 SELECT * FROM finish();
