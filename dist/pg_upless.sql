@@ -20,7 +20,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Create the triggers on a single table
 --
@@ -34,8 +33,8 @@ $$
 DECLARE qry text;
 BEGIN
 
-    INSERT INTO @extschema@.pg_upless_start_time(relnamespace, relname)
-    VALUES (schema_source, table_source)
+    INSERT INTO @extschema@.pg_upless_start_time(relnamespace, relname, start_time)
+    VALUES (schema_source, table_source, current_timestamp)
     ON CONFLICT (relnamespace, relname) DO NOTHING;
 
     SELECT pg_upless_create_trigger(schema_source, table_source) INTO qry;
@@ -44,6 +43,27 @@ BEGIN
     RETURN schema_source || '.' || table_source || '_log';
 END;
 $$;
+--
+--
+--
+CREATE OR REPLACE FUNCTION pg_upless_stop(
+       schema_source NAME,
+       table_source NAME)
+RETURNS
+  text
+LANGUAGE plpgsql AS
+$$
+DECLARE qry text;
+BEGIN
+
+   EXECUTE format('DROP TRIGGER pg_upless_%s_trg ON %s.%s
+   ', table_source, schema_source, table_source);
+
+   RETURN format('Trigger dropped on %s.%s', schema_source, table_source);
+END;
+$$;
+
+
 
 CREATE OR REPLACE FUNCTION pg_upless_stats_trg()
 RETURNS trigger
@@ -66,8 +86,9 @@ BEGIN
     RETURN NEW;
 END;
 $$;
-
-
+--
+--
+--
 CREATE OR REPLACE FUNCTION pg_upless_create_trigger(
        schema_source NAME,
        table_source NAME)
@@ -82,7 +103,9 @@ BEGIN
      BEFORE UPDATE ON %s.%s
      FOR EACH ROW
      EXECUTE PROCEDURE pg_upless_stats_trg();
-   ', table_source, schema_source, table_source);
+
+   ALTER TRIGGER pg_upless_%s_trg ON %s.%s DEPENDS ON EXTENSION pg_upless;
+   ', table_source, schema_source, table_source, table_source, schema_source, table_source);
 
 END;
 $$;
