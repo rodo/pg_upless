@@ -34,7 +34,7 @@ clean:
 	rm -f *.zip $(EXTENSION).control
 
 test:
-	pg_prove -vf $(TESTFILES)
+	pg_prove -vf -r --ext .sql test/
 
 $(PGTLEOUT): $(EXTENSION)--$(EXTVERSION).sql src/pgtle_footer.in src/pgtle_header.in
 	sed -e 's/_EXTVERSION_/$(EXTVERSION)/' src/pgtle_header.in > $(PGTLEOUT)

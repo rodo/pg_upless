@@ -1,5 +1,10 @@
-CREATE TABLE IF NOT EXISTS Spg_upless_stats (
-  id integer GENERATED ALWAYS AS identity,
-  relname      name,
-  relnamespace name
-  );
+--
+--
+--
+CREATE TABLE IF NOT EXISTS pg_upless_stats (
+  relname      name NOT NULL,
+  relnamespace name NOT NULL,
+  useful       bigint,
+  useless      bigint,
+  PRIMARY key (relname, relnamespace)
+);
