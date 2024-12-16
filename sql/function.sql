@@ -12,14 +12,35 @@ DECLARE
     ltables RECORD;
 BEGIN
     FOR ltables IN
-        SELECT table_name FROM information_schema.tables WHERE table_schema = schema_source AND table_type = 'BASE TABLE' AND table_name != 'pg_upless_stats'
+        SELECT table_name FROM information_schema.tables WHERE table_schema = schema_source AND table_type = 'BASE TABLE' AND table_name NOT IN ('pg_upless_stats','pg_upless_start_time','pg_upless_column_exclusion')
     LOOP
         PERFORM @extschema@.pg_upless_start(schema_source, ltables.table_name);
     END LOOP;
 
-    RETURN format('Trigger installed on all tables in schema %s', schema_source);
+    RETURN format('Triggers installed on all tables in schema %s', schema_source);
 END;
 $$;
+
+CREATE OR REPLACE FUNCTION pg_upless_stop(
+    schema_source NAME)
+RETURNS
+    text
+LANGUAGE plpgsql AS
+$$
+DECLARE
+    qry TEXT;
+    ltables RECORD;
+BEGIN
+    FOR ltables IN
+        SELECT table_name FROM information_schema.tables WHERE table_schema = schema_source AND table_type = 'BASE TABLE' AND table_name NOT IN ('pg_upless_stats','pg_upless_start_time','pg_upless_column_exclusion')
+    LOOP
+        PERFORM @extschema@.pg_upless_stop(schema_source, ltables.table_name);
+    END LOOP;
+
+    RETURN format('Triggers removed from all tables in schema %s', schema_source);
+END;
+$$;
+
 --
 -- Create the triggers on a single table
 --
@@ -83,7 +104,7 @@ BEGIN
    ELSE
        -- records are identical
        INSERT INTO @extschema@.pg_upless_stats (relnamespace, relname, useful, useless)
-       VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, 1, 0)
+       VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, 0, 1)
        ON CONFLICT (relnamespace, relname) DO UPDATE
        SET useless = pg_upless_stats.useless + 1;
     END IF;
@@ -105,7 +126,7 @@ DECLARE
 BEGIN
    SELECT ARRAY(SELECT colname FROM @extschema@.pg_upless_column_exclusion) INTO colexclu;
 
-   IF to_jsonb(new_r) - colexclu != to_jsonb(old_r) - colexclu THEN
+   IF (to_jsonb(new_r) - colexclu) != (to_jsonb(old_r) - colexclu) THEN
      RETURN False;
    ELSE
      RETURN True;
@@ -133,5 +154,38 @@ BEGIN
 
    ALTER TRIGGER pg_upless_%s_trg ON %s.%s DEPENDS ON EXTENSION pg_upless;
    ', table_source, schema_source, table_source, table_source, schema_source, table_source);
+END;
+$$;
+--
+--
+--
+CREATE OR REPLACE FUNCTION pg_upless_exclude_column(column_name name)
+RETURNS text
+LANGUAGE plpgsql AS
+$$
+
+BEGIN
+   INSERT INTO @extschema@.pg_upless_column_exclusion (colname)
+       VALUES (column_name)
+       ON CONFLICT (colname) DO NOTHING;
+
+   RETURN format ('Column %s is excluded for all tables', column_name);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION pg_upless_exclude_column(
+    schema_source NAME,
+    table_source NAME,
+    column_name name)
+RETURNS text
+LANGUAGE plpgsql AS
+$$
+
+BEGIN
+   INSERT INTO @extschema@.pg_upless_column_exclusion_table (relnamespace, relname, colname)
+       VALUES (schema_source, table_source, column_name)
+       ON CONFLICT (relnamespace, relname, colname) DO NOTHING;
+
+   RETURN format ('Column %s is excluded for table %s.%s', column_name, schema_source, table_source);
 END;
 $$;

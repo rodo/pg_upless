@@ -5,14 +5,11 @@ DROP EXTENSION IF EXISTS pg_upless CASCADE;
 CREATE EXTENSION pg_upless ;
 
 -- Define the number of tests to run
-SELECT plan(7);
+SELECT plan(11);
 
+--
 CREATE TABLE foobar_upless (id int, fname text DEFAULT 'alpha') ;
 
--- initialize the historization
---
-
---
 PREPARE call_func AS
 SELECT pg_upless_start('public', 'foobar_upless');
 
@@ -63,7 +60,24 @@ SELECT results_eq(
        'SELECT relnamespace, relname, useful::integer, useless::integer FROM pg_upless_stats WHERE relname=''foobar_updated_at'' ',
        $$VALUES ('public'::name, 'foobar_updated_at'::name, 9,1)$$,
        'The stats are correctly collected with an excluded column');
+--
+--
+--
+CREATE TABLE foobar_single (id int, aname text DEFAULT 'alpha', bname text DEFAULT 'alpha') ;
+SELECT lives_ok('SELECT pg_upless_start(''public'', ''foobar_single'')', 'The start is ok');
 
+INSERT INTO foobar_single (id) VALUES (1);
+UPDATE foobar_single SET id = 1;
+
+SELECT results_eq(
+       'SELECT relnamespace, relname, useful::integer, useless::integer FROM pg_upless_stats WHERE relname=''foobar_single'' ',
+       $$VALUES ('public'::name, 'foobar_single'::name, 0, 1)$$,
+       'The stats are correctly collected');
+
+-- exclude aname for all tables
+SELECT lives_ok('SELECT pg_upless_exclude_column(''toto'')', 'Exclude aname with pg_upless_exclude_column');
+
+SELECT lives_ok('SELECT pg_upless_exclude_column(''public'', ''foobar_single'', ''toto'')', 'Exclude bname with pg_upless_exclude_column_table');
 
 --
 SELECT * FROM finish();
