@@ -1,7 +1,7 @@
 # pg_upless
 PostgreSQL Extension to detect **UP**DATE that are use**less**
 
-pg_upless is a set of functions and tables, to build statistics on useless update statements. With modern ORM it can occurs that sometimes an UPDATE is done without changing any values. Is it occurs too often that will impct the performace of the sytem. pg_upless will help to detect them by creating triggers on the table you wnat to follow. It's not aimed to be used all the time, it's more a diagnostc tool you activate in a small period of time. Even if it is designed to have the lower imapct as possible it will downgrad by a little your queries performance.
+pg_upless is a set of functions and tables, to build statistics on useless update statements. With modern ORM it can occurs that sometimes an UPDATE is done without changing any values. If it occurs too often that will impact the performance of your system. **pg_upless** will help to detect them by creating triggers on the tables you want to follow. It's not aimed to be used all the time, it's more a diagnostc tool you activate it a small period of time. Even if it is designed to have the lower imapct as possible it will downgrade by a little your queries performance.
 
 ## INSTALL
 
