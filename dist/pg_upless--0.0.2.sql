@@ -16,7 +16,7 @@ BEGIN
     LOOP
         PERFORM @extschema@.pg_upless_start(schema_source, ltables.table_name);
     END LOOP;
-    RETURN schema_source ;
+    RETURN format('Trigger installed on all tables in schema %s', schema_source);
 END;
 $$;
 
@@ -41,7 +41,7 @@ BEGIN
     SELECT @extschema@.pg_upless_create_trigger(schema_source, table_source) INTO qry;
     EXECUTE qry;
 
-    RETURN schema_source || '.' || table_source || '_log';
+   RETURN format('Trigger installed on %s.%s', schema_source, table_source);
 END;
 $$;
 --
@@ -74,7 +74,7 @@ LANGUAGE plpgsql AS
 $$
 
 BEGIN
-   IF NOT pg_upless_compare_record(NEW, OLD) THEN
+   IF NOT @extschema@.pg_upless_compare_record(NEW, OLD) THEN
        -- records are different
        INSERT INTO @extschema@.pg_upless_stats (relnamespace, relname, useful, useless)
        VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, 1, 0)
@@ -129,7 +129,7 @@ BEGIN
    CREATE TRIGGER pg_upless_%s_trg
      BEFORE UPDATE ON %s.%s
      FOR EACH ROW
-     EXECUTE PROCEDURE pg_upless_stats_trg();
+     EXECUTE PROCEDURE @extschema@.pg_upless_stats_trg();
 
    ALTER TRIGGER pg_upless_%s_trg ON %s.%s DEPENDS ON EXTENSION pg_upless;
    ', table_source, schema_source, table_source, table_source, schema_source, table_source);
