@@ -58,6 +58,10 @@ BEGIN
     VALUES (schema_source, table_source, current_timestamp)
     ON CONFLICT (relnamespace, relname) DO NOTHING;
 
+    INSERT INTO @extschema@.pg_upless_stats (relnamespace, relname, useful, useless)
+    VALUES (schema_source, table_source, 0, 0)
+    ON CONFLICT (relnamespace, relname) DO NOTHING;
+
     -- create the triggers
     SELECT @extschema@.pg_upless_create_trigger(schema_source, table_source) INTO qry;
     EXECUTE qry;
@@ -95,18 +99,17 @@ LANGUAGE plpgsql AS
 $$
 
 BEGIN
-   IF NOT @extschema@.pg_upless_compare_record(NEW, OLD) THEN
+   IF NOT @extschema@.pg_upless_compare_record(NEW, OLD, TG_TABLE_SCHEMA, TG_TABLE_NAME) THEN
        -- records are different
-       INSERT INTO @extschema@.pg_upless_stats (relnamespace, relname, useful, useless)
-       VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, 1, 0)
-       ON CONFLICT (relnamespace, relname) DO UPDATE
-       SET useful = pg_upless_stats.useful + 1;
+       UPDATE @extschema@.pg_upless_stats
+       SET useful = useful + 1
+       WHERE relnamespace = TG_TABLE_SCHEMA AND relname = TG_TABLE_NAME;
    ELSE
        -- records are identical
-       INSERT INTO @extschema@.pg_upless_stats (relnamespace, relname, useful, useless)
-       VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, 0, 1)
-       ON CONFLICT (relnamespace, relname) DO UPDATE
-       SET useless = pg_upless_stats.useless + 1;
+       UPDATE @extschema@.pg_upless_stats
+       SET useless = useless + 1
+       WHERE relnamespace = TG_TABLE_SCHEMA AND relname = TG_TABLE_NAME;
+
     END IF;
 
     RETURN NEW;
@@ -117,14 +120,24 @@ $$;
 --
 -- Return True if the two records are the same
 --
-CREATE OR REPLACE FUNCTION pg_upless_compare_record(new_r record, old_r record)
+CREATE OR REPLACE FUNCTION pg_upless_compare_record(
+    new_r record,
+    old_r record,
+    schema_source name,
+    table_source name)
 RETURNS boolean
 LANGUAGE plpgsql AS
 $$
 DECLARE
   colexclu text[];
 BEGIN
-   SELECT ARRAY(SELECT colname FROM @extschema@.pg_upless_column_exclusion) INTO colexclu;
+   WITH exclu AS (
+       SELECT colname FROM @extschema@.pg_upless_column_exclusion
+       UNION
+       SELECT colname FROM @extschema@.pg_upless_column_exclusion_table
+       WHERE relnamespace = schema_source AND relname = table_source
+     )
+   SELECT ARRAY(SELECT DISTINCT colname FROM exclu) INTO colexclu;
 
    IF (to_jsonb(new_r) - colexclu) != (to_jsonb(old_r) - colexclu) THEN
      RETURN False;

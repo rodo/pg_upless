@@ -5,7 +5,7 @@ DROP EXTENSION IF EXISTS pg_upless CASCADE;
 CREATE EXTENSION pg_upless ;
 
 -- Define the number of tests to run
-SELECT plan(11);
+SELECT plan(13);
 
 --
 CREATE TABLE foobar_upless (id int, fname text DEFAULT 'alpha') ;
@@ -63,7 +63,7 @@ SELECT results_eq(
 --
 --
 --
-CREATE TABLE foobar_single (id int, aname text DEFAULT 'alpha', bname text DEFAULT 'alpha') ;
+CREATE TABLE foobar_single (id int PRIMARY KEY, aname text DEFAULT 'alpha', bname text DEFAULT 'alpha') ;
 SELECT lives_ok('SELECT pg_upless_start(''public'', ''foobar_single'')', 'The start is ok');
 
 INSERT INTO foobar_single (id) VALUES (1);
@@ -75,9 +75,29 @@ SELECT results_eq(
        'The stats are correctly collected');
 
 -- exclude aname for all tables
-SELECT lives_ok('SELECT pg_upless_exclude_column(''toto'')', 'Exclude aname with pg_upless_exclude_column');
+SELECT lives_ok('SELECT pg_upless_exclude_column(''aname'')', 'Exclude aname with pg_upless_exclude_column');
 
-SELECT lives_ok('SELECT pg_upless_exclude_column(''public'', ''foobar_single'', ''toto'')', 'Exclude bname with pg_upless_exclude_column_table');
+UPDATE foobar_single SET aname = 'beta' WHERE id = 1;
+
+SELECT results_eq(
+       'SELECT relnamespace, relname, useful::integer, useless::integer FROM pg_upless_stats WHERE relname=''foobar_single'' ',
+       $$VALUES ('public'::name, 'foobar_single'::name, 0, 2)$$,
+       'The stats are correctly collected');
+
+
+
+--
+-- Exclude column bname for all tables
+--
+SELECT lives_ok('SELECT pg_upless_exclude_column(''public'', ''foobar_single'', ''bname'')', 'Exclude bname with pg_upless_exclude_column_table');
+
+UPDATE foobar_single SET bname = 'beta' WHERE id = 1;
+
+SELECT results_eq(
+       'SELECT relnamespace, relname, useful::integer, useless::integer FROM pg_upless_stats WHERE relname=''foobar_single'' ',
+       $$VALUES ('public'::name, 'foobar_single'::name, 0, 3)$$,
+       'The stats are correctly collected');
+
 
 --
 SELECT * FROM finish();
