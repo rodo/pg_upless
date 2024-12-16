@@ -1,5 +1,9 @@
 BEGIN;
 
+-- useful for local tests
+DROP EXTENSION IF EXISTS pg_upless CASCADE;
+CREATE EXTENSION pg_upless ;
+
 -- Define the number of tests to run
 SELECT plan(3);
 

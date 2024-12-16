@@ -1,11 +1,11 @@
 BEGIN;
 
 -- useful for local tests
-TRUNCATE pg_upless_start_time;
-TRUNCATE pg_upless_stats;
+DROP EXTENSION IF EXISTS pg_upless CASCADE;
+CREATE EXTENSION pg_upless ;
 
 -- Define the number of tests to run
-SELECT plan(5);
+SELECT plan(7);
 
 CREATE TABLE foobar_upless (id int, fname text DEFAULT 'alpha') ;
 
@@ -38,7 +38,34 @@ SELECT lives_ok('SELECT pg_upless_stop(''public'', ''foobar_upless'')', 'The sto
 
 SELECT lives_ok('SELECT pg_upless_start(''public'', ''foobar_upless'')', 'The start after a stop is ok');
 
+--
+-- Exclude record updated_at
+--
 
+CREATE TABLE foobar_updated_at (id int, updated_at timestamp with time zone) ;
+
+-- initialize the historization
+--
+
+--
+
+SELECT lives_ok('SELECT pg_upless_start(''public'', ''foobar_updated_at'')', 'Start ok on table with column to exclude');
+
+--
+INSERT INTO foobar_updated_at (id, updated_at) VALUES (generate_series(1,10), now() );
+
+-- exclude the column updated_at for all tables
+INSERT INTO pg_upless_column_exclusion (colname) VALUES ('updated_at');
+
+UPDATE foobar_updated_at SET id = 7, updated_at = now() + INTERVAL '1 day';
+
+SELECT results_eq(
+       'SELECT relnamespace, relname, useful::integer, useless::integer FROM pg_upless_stats WHERE relname=''foobar_updated_at'' ',
+       $$VALUES ('public'::name, 'foobar_updated_at'::name, 9,1)$$,
+       'The stats are correctly collected with an excluded column');
+
+
+--
 SELECT * FROM finish();
 -- Always end unittest with a rollback
 ROLLBACK;
