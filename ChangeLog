@@ -1,0 +1,5 @@
+2024-12-16  Rodolphe Quiédeville  <rodolphe@quiedeville.org>
+
+	* New version 0.0.2
+
+	* fix error when extension installed in a dedicated schema

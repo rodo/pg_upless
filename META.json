@@ -2,7 +2,7 @@
    "name": "pg_upless",
    "abstract": "Statistics on useless updates statements",
    "description": "Statistics on useless updates statements",
-   "version": "0.0.1",
+   "version": "0.0.2",
    "maintainer": [
       "Rodolphe Quiédeville <rodolphe@quiedeville.org>"
    ],
@@ -21,7 +21,7 @@
      "pg_upless": {
        "abstract": "Statistics on useless updates statements",
        "file": "pg_upless.sql",
-       "version": "0.0.1"
+       "version": "0.0.2"
      }
    },
    "resources": {

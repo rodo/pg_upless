@@ -2,9 +2,9 @@
 -- Create the triggers on all table in a schema
 --
 CREATE OR REPLACE FUNCTION pg_upless_start(
-       schema_source NAME)
+    schema_source NAME)
 RETURNS
-  text
+    text
 LANGUAGE plpgsql AS
 $$
 DECLARE
@@ -14,20 +14,20 @@ BEGIN
     FOR ltables IN
         SELECT table_name FROM information_schema.tables WHERE table_schema = schema_source AND table_type = 'BASE TABLE' AND table_name != 'pg_upless_stats'
     LOOP
-        PERFORM pg_upless_start(schema_source, ltables.table_name);
+        PERFORM @extschema@.pg_upless_start(schema_source, ltables.table_name);
     END LOOP;
-    RETURN schema_source ;
+
+    RETURN format('Trigger installed on all tables in schema %s', schema_source);
 END;
 $$;
-
 --
 -- Create the triggers on a single table
 --
 CREATE OR REPLACE FUNCTION pg_upless_start(
-       schema_source NAME,
-       table_source NAME)
+    schema_source NAME,
+    table_source NAME)
 RETURNS
-  text
+    text
 LANGUAGE plpgsql AS
 $$
 DECLARE qry text;
@@ -38,10 +38,10 @@ BEGIN
     ON CONFLICT (relnamespace, relname) DO NOTHING;
 
     -- create the triggers
-    SELECT pg_upless_create_trigger(schema_source, table_source) INTO qry;
+    SELECT @extschema@.pg_upless_create_trigger(schema_source, table_source) INTO qry;
     EXECUTE qry;
 
-    RETURN schema_source || '.' || table_source || '_log';
+   RETURN format('Trigger installed on %s.%s', schema_source, table_source);
 END;
 $$;
 --
@@ -74,7 +74,7 @@ LANGUAGE plpgsql AS
 $$
 
 BEGIN
-   IF NOT pg_upless_compare_record(NEW, OLD) THEN
+   IF NOT @extschema@.pg_upless_compare_record(NEW, OLD) THEN
        -- records are different
        INSERT INTO @extschema@.pg_upless_stats (relnamespace, relname, useful, useless)
        VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, 1, 0)
@@ -129,7 +129,7 @@ BEGIN
    CREATE TRIGGER pg_upless_%s_trg
      BEFORE UPDATE ON %s.%s
      FOR EACH ROW
-     EXECUTE PROCEDURE pg_upless_stats_trg();
+     EXECUTE PROCEDURE @extschema@.pg_upless_stats_trg();
 
    ALTER TRIGGER pg_upless_%s_trg ON %s.%s DEPENDS ON EXTENSION pg_upless;
    ', table_source, schema_source, table_source, table_source, schema_source, table_source);
