@@ -21,7 +21,7 @@ SELECT has_function('public'::name,
 
 SELECT has_function('public'::name,
                     'pg_upless_compare_record'::name,
-                    ARRAY['record','record']);
+                    ARRAY['record','record','name','name']);
 
 SELECT has_function('public'::name,
                     'pg_upless_stats_trg'::name);

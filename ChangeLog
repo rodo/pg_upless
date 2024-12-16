@@ -1,5 +1,9 @@
 2024-12-16  Rodolphe Quiédeville  <rodolphe@quiedeville.org>
 
+	* add functions to exclude columns
+
+	* add function to stop on all tables in a schema
+
 	* New version 0.0.2
 
 	* fix error when extension installed in a dedicated schema
