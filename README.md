@@ -28,18 +28,29 @@ You can install `pg_upless` on AWS RDS instances b yusing the (pg_tle extension)
 ```sql
 CREATE EXTENSION pg_tle;
 \i dist/pgtle.pg_upless--0.0.1.sql
-CREATE EXTENSION pg_upless
+CREATE EXTENSION pg_upless;
 ```
 
 ## USAGE
+
+To start collecting data on UPDATES on the table `boats` in schema `public` call the function `pg_upless_start`
+
+```
+SELECT pg_upless_start('public','boats');
+          pg_upless_start          
+-----------------------------------
+ Trigger installed on public.boats
+```
+
 
 ## Tables
 
 The extension `pg_upless` creates two tables in it's own schema.
 
-The table `pg_upless_start_time` stores the start time when the audit began, it will be useful to calculate the rate of the UPDATEs. In case
+* `pg_upless_start_time` stores the start time when the audit began, it will be useful to calculate the rate of the UPDATEs. In case
 
-
+* `pg_upless_stats` stores the statistics
+  
 ## Functions
 
 ### pg_upless_start(schema_name, table_name)
@@ -53,3 +64,8 @@ Will start the audit on all the tables in the schema `schema_name`
 ### pg_upless_stop(schema_name, table_name)
 
 Will stop the audit on the table `table_name` in the schema `schema_name`. This will remove the trigger created by the function `pg_upless_start`
+
+### pg_upless_stop(schema_name)
+
+Will stop the audit on all the tables in the schema `schema_name`
+
